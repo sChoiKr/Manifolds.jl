@@ -276,14 +276,25 @@ function vector_transport_to_project!(::Veronese{ℝ, N, D}, Y, p, X, q) where {
     return Y
 end
 
-@doc raw"""
-    zero_vector(M::Veronese{𝔽, N, D}, p)
+""" 
+    is_point(M::Veronese{ℝ, N, D}, p; kwargs...)
 
-returns the zero tangent vector in the tangent space of the Veronese manifold at `p`.
+    Check whether `p` is a valid point on `M`, i.e. `p[1]` is a singleton containing a positive number and `p[2]` is a point on `Sphere(N - 1)`. The tolerance can be set using the `kwargs...`.
 """
-zero_vector(::Veronese{𝔽, N, D}, ::Any...) where {𝔽, N, D}
+is_point(M::Veronese{ℝ, N, D}, p; kwargs...) where {N, D}
 
-function zero_vector!(::Veronese{𝔽, N, D}, v, ::Any...) where {𝔽, N, D}
-    fill!(v, zero(eltype(v)))
-    return v
+function check_point(
+    M::Veronese{ℝ, N, D},
+    p;
+    atol = sqrt(eps(Float64)),
+    kwargs...,
+) where {N, D}
+    if p[1][1] <= 0.0
+        return DomainError(p[1][1], "$(p) has non-positive modulus.")
+    end
+    e = check_point(Sphere(N - 1)::AbstractSphere, p[2]; atol = atol, kwargs...)
+    if !isnothing(e) 
+        return e 
+    end
+    return
 end
