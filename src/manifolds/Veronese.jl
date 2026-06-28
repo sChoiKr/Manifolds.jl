@@ -33,7 +33,9 @@ equipped with a warped product metric. The covering map is given by
 
 Here `N` is the dimension of the base vector space and `D` is the degree, or order, of the symmetric tensor.
 
-The geometry of the Veronese manifold is discussed as a special case of the Segre--Veronese geometry in [JacobssonSwijsenVandervekenVannieuwenhoven:2024](@cite). It is named after [Giuseppe Veronese](https://en.wikipedia.org/wiki/Giuseppe_Veronese) (1854–1917).
+The geometry of the Veronese manifold is discussed as a special case of the Segre--Veronese geometry 
+in [JacobssonSwijsenVandervekenVannieuwenhoven:2024](@cite). 
+It is named after [Giuseppe Veronese](https://en.wikipedia.org/wiki/Giuseppe_Veronese) (1854–1917).
 
 # Constructor
 Veronese(n::Int, d::Int; field::AbstractNumbers=ℝ)
@@ -41,15 +43,15 @@ Veronese(n::Int, d::Int; field::AbstractNumbers=ℝ)
 Generate a degree `d` Veronese manifold over `𝔽^n`.
 `Veronese(n, 1)` is the same as ``\mathbb{R}^{n} \setminus \{ 0 \}``.
 """
-struct Veronese{𝔽,N,D} <: AbstractManifold{𝔽} end
+struct Veronese{𝔽, N, D} <: AbstractManifold{𝔽} end
 
-function Veronese(n::Int...; field::AbstractNumbers = ℝ)
-    return Veronese{field, (n...,)}()
+function Veronese(n::Int, d::Int; field::AbstractNumbers = ℝ)
+    return Veronese{field, n, d}()
 end
 
-function check_size(M::Veronese{𝔽, V}, p) where {𝔽, V}
+function check_size(M::Veronese{𝔽, N, D}, p) where {𝔽, N, D}
     p_size = only.(size.(p))
-    M_size = [1, V...]
+    M_size = [1, N]
 
     if p_size != M_size
         return DomainError(
@@ -61,10 +63,10 @@ function check_size(M::Veronese{𝔽, V}, p) where {𝔽, V}
     return nothing
 end
 
-function check_size(M::Veronese{𝔽, V}, p, X) where {𝔽, V}
+function check_size(M::Veronese{𝔽, N, D}, p, X) where {𝔽, N, D}
     p_size = only.(size.(p))
     X_size = only.(size.(X))
-    M_size = [1, V...]
+    M_size = [1, N]
 
     if p_size != M_size
         return DomainError(
@@ -106,7 +108,7 @@ When D is odd, every point has a unique representative in \mathcal{P}.
 """
 function closest_representative!(M::Veronese{ℝ, N, D}, q, p) where {N, D}
     if iseven(D) && distance(Sphere(N - 1), p[2], q[2]) > pi / 2
-    q[2] .= -q[2]
+        q[2] .= -q[2]
     end
     return q
 end
@@ -125,11 +127,11 @@ The image is a symmetric rank-one tensor of order D.
 embed(::Veronese, p)
 
 function embed!(::Veronese{𝔽, N, D}, q, p) where {𝔽, N, D}
-λ = p[1][1]
-x = p[2]
+    λ = p[1][1]
+    x = p[2]
 
-q .= λ .* kron(ntuple(_ -> x, Val(D))...)
-return q
+    q .= λ .* kron(ntuple(_ -> x, Val(D))...)
+    return q
 
 end
 
@@ -150,19 +152,19 @@ This is the differential of the Veronese parametrization
 ````
 """
 function embed!(::Veronese{𝔽, N, D}, q, p, X) where {𝔽, N, D}
-λ = p[1][1]
-x = p[2]
+    λ = p[1][1]
+    x = p[2]
 
-ν = X[1][1]
-u = X[2]
+    ν = X[1][1]
+    u = X[2]
 
-q .= ν .* kron(ntuple(_ -> x, Val(D))...)
+    q .= ν .* kron(ntuple(_ -> x, Val(D))...)
 
-for i in 1:D
-    q .+= λ .* kron(ntuple(j -> j == i ? u : x, Val(D))...)
-end
+    for i in 1:D
+        q .+= λ .* kron(ntuple(j -> j == i ? u : x, Val(D))...)
+    end
 
-return q
+    return q
 
 end
 
@@ -236,26 +238,26 @@ is the orthogonal projection onto ``T_x\mathbb{S}^{N-1}``.
 The implementation uses the symmetric rank-one structure and avoids explicitly
 forming the ambient tensor.
 """
-vector_transport_to(::Veronese{ℝ, N, D}, Y, p, X, q, ::ProjectionTransport) where {N, D} 
+vector_transport_to(::Veronese{ℝ, N, D}, Y, p, X, q, ::ProjectionTransport) where {N, D}
 
-function vector_transport_to_project!(::Veronese{ℝ, N, D}, Y, p, X, q) where {N, D} 
-    
-    for Yi in Y 
-        fill!(Yi, zero(eltype(Yi))) 
+function vector_transport_to_project!(::Veronese{ℝ, N, D}, Y, p, X, q) where {N, D}
+
+    for Yi in Y
+        fill!(Yi, zero(eltype(Yi)))
     end
 
-    checkbounds(p, 1:2) 
-    checkbounds(q, 1:2) 
-    checkbounds(X, 1:2) 
-    checkbounds(Y, 1:2) 
-    
-    @inbounds begin 
-        λ = q[1][1] 
-        μ = p[1][1] 
-        ν = X[1][1] 
-        x = q[2] 
-        y = p[2] 
-        u = X[2] 
+    checkbounds(p, 1:2)
+    checkbounds(q, 1:2)
+    checkbounds(X, 1:2)
+    checkbounds(Y, 1:2)
+
+    @inbounds begin
+        λ = q[1][1]
+        μ = p[1][1]
+        ν = X[1][1]
+        x = q[2]
+        y = p[2]
+        u = X[2]
     end
 
     α = dot(y, x)
@@ -279,22 +281,57 @@ end
 """ 
     is_point(M::Veronese{ℝ, N, D}, p; kwargs...)
 
-    Check whether `p` is a valid point on `M`, i.e. `p[1]` is a singleton containing a positive number and `p[2]` is a point on `Sphere(N - 1)`. The tolerance can be set using the `kwargs...`.
+    Check whether `p` is a valid point on `M`, i.e. `p[1]` is a 
+    singleton containing a positive number and `p[2]` is a point 
+    on `Sphere(N - 1)`. The tolerance can be set using the `kwargs...`.
 """
 is_point(M::Veronese{ℝ, N, D}, p; kwargs...) where {N, D}
 
 function check_point(
-    M::Veronese{ℝ, N, D},
-    p;
-    atol = sqrt(eps(Float64)),
-    kwargs...,
-) where {N, D}
+        M::Veronese{ℝ, N, D},
+        p;
+        atol = sqrt(eps(Float64)),
+        kwargs...,
+    ) where {N, D}
+    e = check_size(M, p)
+    if !isnothing(e)
+        return e
+    end
     if p[1][1] <= 0.0
         return DomainError(p[1][1], "$(p) has non-positive modulus.")
     end
     e = check_point(Sphere(N - 1)::AbstractSphere, p[2]; atol = atol, kwargs...)
-    if !isnothing(e) 
-        return e 
+    if !isnothing(e)
+        return e
     end
+    return
+end
+
+"""
+    is_vector(M::Veronese{ℝ, N, D}, p, X; kwargs...)
+
+Check whether `X` is a tangent vector to `p` on `M`, i.e. `X[1]` is a
+singleton containing the radial component and `X[2]` is a tangent vector
+to `p[2]` on `Sphere(N - 1)`.
+The tolerance can be set using the `kwargs...`.
+"""
+is_vector(M::Veronese{ℝ, N, D}, p, X; kwargs...) where {N, D}
+
+function check_vector(
+        M::Veronese{ℝ, N, D},
+        p,
+        X;
+        atol = sqrt(eps(Float64)),
+        kwargs...,
+    ) where {N, D}
+    e = check_size(M, p, X)
+    if !isnothing(e)
+        return e
+    end
+    e = check_vector(Sphere(N - 1)::AbstractSphere, p[2], X[2]; atol = atol, kwargs...)
+    if !isnothing(e)
+        return e
+    end
+
     return
 end
