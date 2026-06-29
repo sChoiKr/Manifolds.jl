@@ -114,6 +114,29 @@ function closest_representative!(M::Veronese{ℝ, N, D}, q, p) where {N, D}
 end
 
 @doc raw"""
+    distance(M::Veronese{ℝ, N, D}, p, q)
+
+Riemannian distance between two points `p` and `q` on the Veronese manifold.
+
+Assume ``p ≐ (λ, x)``, ``q ≐ (μ, y) ∈ \mathcal{V}`` are connected by a geodesic. Let
+
+````math
+    \theta = \sphericalangle(x, y)
+````
+
+and assume ``(μ, y)`` is the representative of ``q`` minimizing ``\theta``. Then
+
+````math
+    \operatorname{dist}_{\mathcal{V}}(p, q) = \sqrt{λ^2 - 2 λμ\cos(\theta) + μ^2}.
+````
+"""
+function distance(M::Veronese{ℝ, N, D}, p, q) where {N, D}
+    closest_representative!(M, q, p)
+    θ = distance(Sphere(N - 1), p[2], q[2])
+    return sqrt((p[1][1] - q[1][1])^2 + 4 * p[1][1] * q[1][1] * sin(θ / 2)^2)
+end
+
+@doc raw"""
     embed(M::Veronese{𝔽, N, D}, p)
     embed!(M::Veronese{𝔽, N, D}, q, p)
 
@@ -130,7 +153,7 @@ function embed!(::Veronese{𝔽, N, D}, q, p) where {𝔽, N, D}
     λ = p[1][1]
     x = p[2]
 
-    q .= λ .* kron(ntuple(_ -> x, Val(D))...)
+    q .= λ .* (D == 1 ? x : kron(ntuple(_ -> x, Val(D))...))
     return q
 
 end
@@ -158,10 +181,10 @@ function embed!(::Veronese{𝔽, N, D}, q, p, X) where {𝔽, N, D}
     ν = X[1][1]
     u = X[2]
 
-    q .= ν .* kron(ntuple(_ -> x, Val(D))...)
+    q .= ν .* (D == 1 ? x : kron(ntuple(_ -> x, Val(D))...))
 
     for i in 1:D
-        q .+= λ .* kron(ntuple(j -> j == i ? u : x, Val(D))...)
+        q .+= λ .* (D == 1 ? u : kron(ntuple(j -> j == i ? u : x, Val(D))...))
     end
 
     return q
